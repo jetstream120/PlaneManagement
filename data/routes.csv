@@ -1,0 +1,4 @@
+Origin,Destination,Length
+LAX,SFO,100
+SFO,SEA,250
+SEA,LAX,350

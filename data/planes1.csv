@@ -1,2 +1,3 @@
-Type,Range,Location
-738,600,LAX
+Registration,Type,Range,Speed,Location
+N275SY,E175,700,600,SFO
+N1111,738,1300,100,LAX

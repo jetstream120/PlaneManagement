@@ -8,5 +8,7 @@ public class ControllerTest {
     public void testLoad() {
         LogisticsController testController = new LogisticsController();
         testController.load("data/routes1.csv", "data/planes1.csv");
+        testController.findRoutes();
+        System.out.println("test");
     }
 }

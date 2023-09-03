@@ -3,18 +3,35 @@ package src;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-public class REPL<V,E> {
+/**
+ * The REPL class is the user interface class in the terminal
+ *
+ * @param <V> - The type of vertice
+ * @param <E> - The type of edge
+ */
+public class REPL<V extends ICity,E extends IEdge> {
     private static final String REPL_REGEX = "\"?( |$)(?=(([^\"]*\"){2})*[^\"]*$)\"?";
 
-    private PlaneController<V, E> controller;
+    private IPlaneController<V, E> controller;
 
-    public REPL(PlaneController<V, E> controllerIn) {
+    /**
+     * The constructer for the REPL class
+     *
+     * @param controllerIn - The PlaneController that is coming in
+     */
+    public REPL(IPlaneController<V, E> controllerIn) {
         this.controller = controllerIn;
     }
 
+    /**
+     * Removes the quotation marks needed when interacting with the REPL
+     * interface
+     *
+     * @param str - String that is turned in
+     * @return - String without quotations
+     */
     private String stripQuote(String str) {
         int last = str.length() - 1;
         if (last == -1) {
@@ -27,6 +44,9 @@ public class REPL<V,E> {
         return str;
     }
 
+    /**
+     * Runs the REPL from Main.java and interacts with the user in the terminal
+     */
     public void run() {
         System.out.print(">>> ");
         try (BufferedReader reader =
@@ -58,12 +78,10 @@ public class REPL<V,E> {
                         }
                         break;
                     case "assign":
-                        if (args.length == 3) {
-                            String origin = args[1];
-                            String destination = args[2];
+                        if (args.length == 1) {
                             try {
-                                List<E> path = this.controller.findRoutes();
-                                response = this.getPathString(origin, destination, path);
+                                HashMap<String, List<E>> path = this.controller.findRoutes();
+                                response = this.getPathString(path);
                             } catch (Exception e) {
                                 response = e.getMessage();
                             }
@@ -84,6 +102,12 @@ public class REPL<V,E> {
         }
     }
 
+    /**
+     * Creates a line across the page with the character that is sent in
+     *
+     * @param character - Character to make a line out of
+     * @return - The resulting string that is a line across the console
+     */
     private String line(String character) {
         StringBuilder s = new StringBuilder();
         for (int i = 0; i < 80; i++) {
@@ -92,22 +116,50 @@ public class REPL<V,E> {
         return s.toString();
     }
 
-    private String getPathString(String origin, String destination, List<E> path) {
+    /**
+     * Takes the path of the aircraft in the form of a hashmap and makes the
+     * data readable and usable in the terminal
+     *
+     * @param path - HashMap containing the path of each aircraft
+     * @return - Returns a string with the routing information
+     */
+    private String getPathString(HashMap<String, List<E>> path) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.line("=")).append("\n");
 
         if (path.isEmpty()) {
             sb.append("No route found").append("\n");
         } else {
-            sb.append("Origin: ").append(origin.toString());
-            sb.append("\nDestination: ").append(destination.toString()).append("\n");
-            sb.append(this.line("-")).append("\n");
-
-            for (E leg : path) {
-                sb.append(" -- ").append(leg.toString()).append("\n");
+            for (Map.Entry<String, List<E>> entry : path.entrySet()) {
+                List<E> visited = entry.getValue();
+                sb.append("Registration: ").append(entry.getKey());
+                if (entry.getValue().isEmpty()) {
+                    sb.append("\nNo route filed for this aircraft. \n");
+                } else {
+                    sb.append("\nRoute:");
+                    int times = 1;
+                    for (E route : visited) {
+                        sb.append("\nFlight: ").append(times).append("\n");
+                        sb.append(route.getSource().getName()).append(
+                                "----->").append(route.getDestination().getName())
+                                .append("\n");
+                        times += 1;
+                    }
+                }
+                sb.append(this.line("=")).append("\n");
             }
         }
-        sb.append(this.line("="));
+
+        if (!controller.getUnfilledRoutes().isEmpty()) {
+            sb.append("The following routes are unfilled due to " +
+                    "aircraft shortage or insuffient range:\n");
+            for (E route : controller.getUnfilledRoutes()) {
+                sb.append(route.getSource().getName()).append(
+                                "----->").append(route.getDestination().getName())
+                        .append("\n");
+            }
+        }
+
         return sb.toString();
     }
 }
